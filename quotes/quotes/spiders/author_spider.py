@@ -7,16 +7,18 @@ class AuthorSpider(scrapy.Spider):
     start_urls = ['http://quotes.toscrape.com/']
 
     def parse(self, response):
-        author_page_links = response.css('.author + a')
-        yield from response.follow_all(author_page_links, self.parse_author)
+        author_page_links = response.css('.author + a')       
+        for href in author_page_links:
+            yield response.follow(href, callback=self.parse_author)
 
         pagination_links = response.css('li.next a')
-        yield from response.follow_all(pagination_links, self.parse)
+        for href in pagination_links:
+            yield response.follow(href, self.parse)
+       
 
     def parse_author(self, response):
         def extract_with_css(query):
-            return response.css(query).get(default='').strip()
-        data = []
+            return response.css(query).get(default='').strip() 
         yield {
             'name': extract_with_css('h3.author-title::text'),
             'birthdate': extract_with_css('.author-born-date::text'),
